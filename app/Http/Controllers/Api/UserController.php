@@ -8,8 +8,12 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
+
 
 class UserController extends Controller
 {
@@ -36,7 +40,7 @@ class UserController extends Controller
     {
         $data = $request->validated();
         $data['password'] = bcrypt($data['password']);
-        //Todo: Forza un error para ver como se comporta SQL
+        //Todo: Forzar un error para ver como se comporta SQL
         try {
             $user = User::create($data);
             return response(new UserResource($user), 201);
@@ -44,9 +48,11 @@ class UserController extends Controller
         } catch (QueryException $e) {
             return response([
                 'error' => true,
-                'code' => $e->getCode(),
-                'message' => $e->errorInfo,
-                'trace' => $e->getTrace()
+                'data' => [
+                    'code' => $e->getCode(),
+                    'message' => $e->errorInfo,
+                    'trace' => $e->getTrace()
+                ]
             ], 500);
         }
 
@@ -74,7 +80,7 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user): UserResource|Response
     {
-        $data = $request->validated();
+        $data = $request->all();
         if (isset($data['password'])) {
             $data['password'] = bcrypt($data['password']);
         }
@@ -84,9 +90,11 @@ class UserController extends Controller
         } catch (QueryException $e) {
             return response([
                 'error' => true,
-                'code' => $e->getCode(),
-                'message' => $e->errorInfo,
-                'trace' => $e->getTrace()
+                'data' => [
+                    'code' => $e->getCode(),
+                    'message' => $e->errorInfo,
+                    'trace' => $e->getTrace()
+                ]
             ], 500);
         }
     }
@@ -107,9 +115,11 @@ class UserController extends Controller
         } catch (QueryException $e) {
             return response([
                 'error' => true,
-                'code' => $e->getCode(),
-                'message' => $e->errorInfo,
-                'trace' => $e->getTrace()
+                'data' => [
+                    'code' => $e->getCode(),
+                    'message' => $e->errorInfo,
+                    'trace' => $e->getTrace()
+                ]
             ], 500);
         }
     }
