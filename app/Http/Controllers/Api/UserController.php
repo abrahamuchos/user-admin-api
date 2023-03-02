@@ -8,11 +8,8 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules\Password;
 
 
 class UserController extends Controller
@@ -20,13 +17,21 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return AnonymousResourceCollection
+     * @return AnonymousResourceCollection|Response
      */
-    public function index(): AnonymousResourceCollection
+    public function index(): AnonymousResourceCollection|Response
     {
-        return UserResource::collection(
-            User::query()->orderBy('id', 'desc')->paginate(10)
-        );
+        try {
+            $user = User::query()->orderBy('id', 'desc')->paginate(10);
+            return UserResource::collection($user);
+        } catch (QueryException $e) {
+            return response([
+                'timestamp' => now(),
+                'message' => 'Upps! something wrong please reload the page.',
+                'details' => $e->getMessage(),
+                'code' => $e->getCode()
+            ], 500);
+        }
     }
 
     /**
@@ -40,19 +45,16 @@ class UserController extends Controller
     {
         $data = $request->validated();
         $data['password'] = bcrypt($data['password']);
-        //Todo: Forzar un error para ver como se comporta SQL
         try {
             $user = User::create($data);
             return response(new UserResource($user), 201);
 
         } catch (QueryException $e) {
             return response([
-                'error' => true,
-                'data' => [
-                    'code' => $e->getCode(),
-                    'message' => $e->errorInfo,
-                    'trace' => $e->getTrace()
-                ]
+                'timestamp' => now(),
+                'message' => 'Upps! something wrong please reload the page.',
+                'details' => $e->getMessage(),
+                'code' => $e->getCode()
             ], 500);
         }
 
@@ -84,17 +86,16 @@ class UserController extends Controller
         if (isset($data['password'])) {
             $data['password'] = bcrypt($data['password']);
         }
+        $t = ['id'=> 'hello'];
         try {
-            $user->update($data);
+            $user->update($t);
             return new UserResource($user);
-        } catch (QueryException $e) {
+        } catch (\Exception $e) {
             return response([
-                'error' => true,
-                'data' => [
-                    'code' => $e->getCode(),
-                    'message' => $e->errorInfo,
-                    'trace' => $e->getTrace()
-                ]
+                'timestamp' => now(),
+                'message' => 'Upps! something wrong please reload the page.',
+                'details' => $e->getMessage(),
+                'code' => $e->getCode()
             ], 500);
         }
     }
@@ -114,12 +115,10 @@ class UserController extends Controller
 
         } catch (QueryException $e) {
             return response([
-                'error' => true,
-                'data' => [
-                    'code' => $e->getCode(),
-                    'message' => $e->errorInfo,
-                    'trace' => $e->getTrace()
-                ]
+                'timestamp' => now(),
+                'message' => 'Upps! something wrong please reload the page.',
+                'details' => $e->getMessage(),
+                'code' => $e->getCode()
             ], 500);
         }
     }
